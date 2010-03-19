@@ -37,7 +37,7 @@
     <snapshotRepository>
       <id>yayetee.com</id>
       <name>Main repo Name</name>
-      <url>scp://dracore/web/yayetee.com/release/</url>
+      <url>scp://teamon@dracore:/home/teamon/web/yayetee.com/release/</url>
     </snapshotRepository>
   </distributionManagement>
 
