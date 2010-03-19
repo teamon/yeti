@@ -2,8 +2,9 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.yayetee</groupId>
   <artifactId>yeti</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2-SNAPSHOT</version>
   <inceptionYear>2008</inceptionYear>
+  <name>Yeti</name>
   <properties>
     <scala.version>2.7.7</scala.version>
   </properties>
@@ -30,7 +31,7 @@
     <repository>
       <id>yayetee.com</id>
       <name>Main repo Name</name>
-      <url>scp://dracore/web/yayetee.com/release/</url>
+      <url>scp://teamon@dracore:/home/teamon/web/yayetee.com/release/</url>
     </repository>
     
     <snapshotRepository>
