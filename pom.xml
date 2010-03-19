@@ -27,10 +27,16 @@
   </pluginRepositories>
 
   <distributionManagement>
+    <repository>
+      <id>yayetee.com</id>
+      <name>Main repo Name</name>
+      <url>scp://dracore/web/yayetee.com/release/</url>
+    </repository>
+    
     <snapshotRepository>
       <id>yayetee.com</id>
       <name>Main repo Name</name>
-      <url>scp://dracotr/web/yayetee.com/release/</url>
+      <url>scp://dracore/web/yayetee.com/release/</url>
     </snapshotRepository>
   </distributionManagement>
 
