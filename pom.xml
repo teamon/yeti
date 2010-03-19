@@ -26,6 +26,15 @@
     </pluginRepository>
   </pluginRepositories>
 
+  <distributionManagement>
+    <snapshotRepository>
+      <id>yayetee.com</id>
+      <name>Main repo Name</name>
+      <url>scp://dracotr/web/yayetee.com/release/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+
   <dependencies>
     <dependency>
       <groupId>org.scala-lang</groupId>
