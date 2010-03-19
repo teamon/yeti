@@ -88,6 +88,7 @@
           </launchers>
         </configuration>
       </plugin>
+      
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-eclipse-plugin</artifactId>
@@ -121,16 +122,14 @@
         </configuration>
       </plugin>
 
+      <plugin>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.0-beta9</version>
+      </plugin>
+
     </plugins>
   </build>
 
-  <distributionManagement>
-    <repository>
-      <id>yayetee.com</id>
-      <name>Main application repository</name>
-      <url>sftp://dracore/home/teamon/web/yayetee.com/release</url>
-    </repository>
-  </distributionManagement>
 
   <reporting>
     <plugins>
@@ -157,14 +156,15 @@
         </configuration>
       </plugin>
 
-      <plugin>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <configuration>
-          <file>target/${artifactId}-${version}-jar-with-dependencies.jar</file>
-          <repositoryId>yayetee.com</repositoryId>
-          <url>scp://dracore/home/teamon/web/yayetee.com/release</url>
-        </configuration>
-      </plugin>
+
     </plugins>
   </reporting>
+
+  <scm>
+    <connection>scm:git:git@github.com:teamon/yeti.git</connection>
+    <url>scm:git:git@github.com:teamon/yeti.git</url>
+    <developerConnection>scm:git:git@github.com:teamon/yeti.git</developerConnection>
+  </scm>
+
+    
 </project>
