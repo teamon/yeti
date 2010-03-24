@@ -1,107 +1,77 @@
 package com.yayetee.yeti
 
-import java.io.{OutputStream, InputStream}
-
 import scala.swing._
 import scala.swing.event._
-import scala.collection.mutable.ListBuffer
-import gnu.io.{CommPortIdentifier, SerialPort}
+import javax.swing.{UIManager, SwingUtilities}
 
-class SerialReader(in: InputStream) extends Runnable {
-	def run() {
-		val buffer = new Array[Byte](1024)
-		var len = -1
-
-		try {
-			while (true) {
-				len = in.read(buffer)
-				if (len >= -1) println(new String(buffer, 0, len))
-			}
-		} catch {
-			case _ => println("dupa in")
-		}
+object SystemProperties {
+	def set(props: (String, String)*) {
+		props.foreach { p => System.setProperty(p._1, p._2) }
 	}
 }
 
-class SerialWriter(out: OutputStream) extends Runnable {
-	def run() {
-		try {
-			out.write(Array('!'.toByte))
+object Yeti extends GUIApplication {
+	val tabs = List(Sumo, Preferences)
 
-			var c = 0
-			while (true) {
-				c = System.in.read
-				if (c >= -1) out.write(c)
-			}
-		} catch {
-			case _ => println("dupa out")
-		}
-	}
-}
-
-class Serial(portName: String) {
-	val portIdentifier = CommPortIdentifier.getPortIdentifier(portName)
-
-	if (portIdentifier.isCurrentlyOwned) {
-		println("ERROR: Port in use")
-	} else {
-		val commPort = portIdentifier.open(this.getClass.getName, 2000)
-
-		if (commPort.isInstanceOf[SerialPort]) {
-			val serialPort = commPort.asInstanceOf[SerialPort]
-			serialPort.setSerialPortParams(9600, SerialPort.DATABITS_8, SerialPort.STOPBITS_2, SerialPort.PARITY_NONE)
-
-			val in = serialPort.getInputStream
-			val out = serialPort.getOutputStream
-
-			new Thread(new SerialReader(in)).start
-			new Thread(new SerialWriter(out)).start
-		} else {
-			println("ERROR: Only serial ports are handled by this example")
-		}
-	}
-}
-
-object Serial {
-	def portList = {
-		val list = new ListBuffer[String]
-		val e = CommPortIdentifier.getPortIdentifiers
-		while (e.hasMoreElements) {
-			val x: CommPortIdentifier = e.nextElement.asInstanceOf[CommPortIdentifier]
-			list += x.getName
-		}
-		list
-	}
-}
-
-object Yeti extends SimpleGUIApplication {
 	def top = new MainFrame {
 		title = "Yeti"
 
-		val ports = new ComboBox[String](Serial.portList)
+		contents = new BoxPanel(Orientation.Vertical) {
+			contents += new TabbedPane { tabs.foreach { a => pages += new TabbedPane.Page(a.title, a.gui) }	}
 
-		val go = new Button {
-			text = "Connect"
+//			contents += new BorderPanel {
+//				add(new TextArea { rows = 15 }, BorderPanel.Position.Center)
+//			}
+		}
+//
+//		listenTo(ports.selection, buttonConnect)
+//
+//		reactions += {
+//			case ButtonClicked(e) => println(ports.selection.item)
+//		}
+	}
+
+	def main(args: Array[String]){
+
+		// Quaqua properties (MacOS X only)
+		SystemProperties.set(
+		)
+
+		try {
+			UIManager.setLookAndFeel(
+				"ch.randelshofer.quaqua.QuaquaLookAndFeel"
+			)
+		} catch {
+			case e => println(e)
 		}
 
-		val prefs = new FlowPanel {
-			contents += ports
-			contents += go
+		// taken directly from SimpleGUIApplication.scala (scala 2.7.7)
+		SwingUtilities.invokeLater {
+			new Runnable { def run { init; top.pack; top.visible = true } }
 		}
+	}
+}
 
-		val main = new FlowPanel
+object Preferences extends App {
+	def title = "Preferences"
+	
+	object ports extends ComboBox[String](Serial.portList){
+		
+	}
 
-		val tabbedpane = new TabbedPane {
-			pages += new TabbedPane.Page("Main", main)
-			pages += new TabbedPane.Page("Preferences", prefs)
-		}
+	object buttonConnect extends Button {
+		text = "Connect"
+	}
 
-		contents = tabbedpane
+	object buttonRefresh extends Button {
+		text = "Refresh"
+	}
 
-		listenTo(ports.selection, go)
-
-		reactions += {
-			case ButtonClicked(e) => new Serial(ports.selection.item)
+	def gui = new BoxPanel(Orientation.Vertical){
+		contents += ports
+		contents += new BoxPanel(Orientation.Horizontal){
+			contents += buttonConnect
+			contents += buttonRefresh
 		}
 	}
 }
