@@ -1,8 +1,8 @@
 package com.yayetee.yeti
 
 import scala.swing._
-import event.SelectionChanged
-import javax.swing.{SwingUtilities, UIManager}
+import event.{ButtonClicked, SelectionChanged}
+import javax.swing.{UIManager}
 import java.awt.Dimension
 
 object SystemProperties {
@@ -11,40 +11,57 @@ object SystemProperties {
 	}
 }
 
-object Yeti extends GUIApplication {
-	val tabs = List(Piast, Sumo, Preferences)
+object Yeti extends SwingApplication {
+	val tabs = Piast :: Sumo :: Preferences :: Nil
+
+	lazy val logTextArea = new TextArea {
+		rows = 10
+		editable = false
+	}
+
+	lazy val tabbedPane = new TabbedPane {
+		tabs.foreach { a =>
+			pages += new TabbedPane.Page(a.title, a.gui){
+//				enabled = false
+			}
+		}
+	}
+
+	lazy val maxWidth  = tabs.map { _.gui.peer.getPreferredSize.width }.max
+	lazy val maxHeight = tabs.map{  _.gui.peer.getPreferredSize.height }.max
 
 	def top = new MainFrame {
 		title = "Yeti"
 
-		val tabbedPane = new TabbedPane {
-			tabs.foreach {a => pages += new TabbedPane.Page(a.title, a.gui)}
-		}
-
 		contents = new BoxPanel(Orientation.Vertical) {
 			contents += tabbedPane
+			contents += new ScrollPane(logTextArea)
 		}
 
-		tabbedPane.size = new Dimension(500, 500)
+//		tabbedPane.pages(tabs.length-1).enabled = true
 
-		//			contents += new BorderPanel {
-		//				add(new TextArea { rows = 15 }, BorderPanel.Position.Center)
-		//			}
+//		tabbedPane.selection.index = tabs.length-1
+
+		val originalTabsDim = tabbedPane.preferredSize
+
 		listenTo(tabbedPane.selection)
 
 		reactions += {
 			case SelectionChanged(pane) =>
-				// change frame size
-				val s = tabs(tabbedPane.selection.index).size
-				tabbedPane.selection.page.self.size = s
-				tabbedPane.selection.page.self.repaint
-				size = s
-				repaint
-				peer.validate
+				val panelDim = tabbedPane.selection.page.self.preferredSize
+
+		    println(panelDim)
+
+		    tabbedPane.preferredSize = new Dimension(
+		      originalTabsDim.width - (maxWidth - panelDim.width),
+		      originalTabsDim.height - (maxHeight - panelDim.height)
+			  )
+
+		    pack
 		}
 	}
 
-	def main(args: Array[String]) {
+	override def startup(args: Array[String]) {
 
 		// Quaqua properties (MacOS X only)
 		SystemProperties.set()
@@ -55,16 +72,10 @@ object Yeti extends GUIApplication {
 			case e => println(e)
 		}
 
-		// taken directly from SimpleGUIApplication.scala (scala 2.7.7)
-		SwingUtilities.invokeLater {
-			new Runnable {
-				def run {
-					init;
-					top.pack;
-					top.visible = true
-				}
-			}
-		}
+		// taken directly from SimpleSwingApplication.scala (scala 2.8.0.Beta1-RC8)
+		val t = top
+		t.pack()
+		t.visible = true
 	}
 }
 
@@ -82,13 +93,20 @@ object Preferences extends App {
 		text = "Refresh"
 	}
 
-	def gui = new BoxPanel(Orientation.Vertical) {
+	lazy val gui = new BoxPanel(Orientation.Vertical) {
 		contents += ports
 		contents += new BoxPanel(Orientation.Horizontal) {
 			contents += buttonConnect
 			contents += buttonRefresh
 		}
-	}
 
-	def size = new Dimension(500, 200)
+		listenTo(buttonConnect, buttonRefresh)
+
+//		reactions += {
+////			case ButtonClicked(btn) => btn match {
+////				case buttonConnect => println("connect")
+////				case buttonRefresh => println("refresh")
+////			}
+//		}
+	}
 }

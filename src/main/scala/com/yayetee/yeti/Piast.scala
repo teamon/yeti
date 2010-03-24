@@ -2,9 +2,7 @@ package com.yayetee.yeti
 
 import javax.swing.SwingConstants
 import javax.swing.border.TitledBorder
-import swing.{Label, Slider, Orientation, BoxPanel}
-import java.awt.Dimension
-import collection.mutable.ListBuffer
+import swing._
 
 class Axis(title: String) {
 	object slider extends Slider {
@@ -16,17 +14,17 @@ class Axis(title: String) {
 		paintLabels = true
 		enabled = false
 		peer.setOrientation(SwingConstants.VERTICAL)
-//		peer.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT)
+		peer.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT)
 	}
 
 	object label extends Label {
 		text = slider.value.toString
-//		horizontalAlignment = Alignment.Left
-//		peer.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT)
+		horizontalAlignment = Alignment.Left
+		peer.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT)
 	}
 
 
-	object panel extends BoxPanel(Orientation.Vertical){
+	object panel extends BoxPanel(Orientation.Vertical) {
 		border = new TitledBorder(title)
 
 		contents += slider
@@ -39,18 +37,9 @@ object Piast extends App {
 	val y = new Axis("Y axis")
 	val z = new Axis("Z axis")
 
-	val axes = new ListBuffer[Axis]()
-	axes += x
-	axes += y
-	axes += z
-
-
 	def title = "Piast"
 
-	def gui = new BoxPanel(Orientation.Horizontal) {
-		println("gui requested")
-		axes foreach { contents += _.panel }
+	lazy val gui = new BoxPanel(Orientation.Horizontal) {
+		List(x, y, z) foreach {contents += _.panel}
 	}
-
-	def size = new Dimension(100, 100)
 }
