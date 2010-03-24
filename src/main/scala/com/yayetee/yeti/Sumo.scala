@@ -54,7 +54,7 @@ object Sumo extends App {
 		engines.foreach { contents += _.panel }
 	}
 
-//	def size = new Dimension(200, 200)
+	def size = new Dimension(200, 200)
 }
 
 

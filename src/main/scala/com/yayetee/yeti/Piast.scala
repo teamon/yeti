@@ -4,6 +4,7 @@ import javax.swing.SwingConstants
 import javax.swing.border.TitledBorder
 import swing.{Label, Slider, Orientation, BoxPanel}
 import java.awt.Dimension
+import collection.mutable.ListBuffer
 
 class Axis(title: String) {
 	object slider extends Slider {
@@ -38,12 +39,18 @@ object Piast extends App {
 	val y = new Axis("Y axis")
 	val z = new Axis("Z axis")
 
+	val axes = new ListBuffer[Axis]()
+	axes += x
+	axes += y
+	axes += z
+
 
 	def title = "Piast"
 
 	def gui = new BoxPanel(Orientation.Horizontal) {
-		List(x,y,z) foreach { contents += _.panel }
+		println("gui requested")
+		axes foreach { contents += _.panel }
 	}
 
-//	def size = new Dimension(100, 100)
+	def size = new Dimension(100, 100)
 }
