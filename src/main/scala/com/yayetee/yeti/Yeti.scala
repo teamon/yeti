@@ -1,41 +1,43 @@
 package com.yayetee.yeti
 
 import scala.swing._
-import scala.swing.event._
-import javax.swing.{UIManager, SwingUtilities}
+import javax.swing.{SwingUtilities, UIManager}
 
 object SystemProperties {
 	def set(props: (String, String)*) {
-		props.foreach { p => System.setProperty(p._1, p._2) }
+		props.foreach {p => System.setProperty(p._1, p._2)}
 	}
 }
 
 object Yeti extends GUIApplication {
-	val tabs = List(Sumo, Preferences)
+	val tabs = List(Piast, Sumo, Preferences)
+
+	val tabbedPane = new TabbedPane {
+		tabs.foreach {a => pages += new TabbedPane.Page(a.title, a.gui)}
+	}
 
 	def top = new MainFrame {
 		title = "Yeti"
 
 		contents = new BoxPanel(Orientation.Vertical) {
-			contents += new TabbedPane { tabs.foreach { a => pages += new TabbedPane.Page(a.title, a.gui) }	}
-
-//			contents += new BorderPanel {
-//				add(new TextArea { rows = 15 }, BorderPanel.Position.Center)
-//			}
+			contents += tabbedPane
 		}
-//
-//		listenTo(ports.selection, buttonConnect)
+
+		//			contents += new BorderPanel {
+		//				add(new TextArea { rows = 15 }, BorderPanel.Position.Center)
+		//			}
+//		listenTo(tabbedPane.selection)
 //
 //		reactions += {
-//			case ButtonClicked(e) => println(ports.selection.item)
+//			case SelectionChanged(pane) => println(pane)
 //		}
 	}
 
-	def main(args: Array[String]){
+	def main(args: Array[String]) {
 
 		// Quaqua properties (MacOS X only)
 		SystemProperties.set(
-		)
+			)
 
 		try {
 			UIManager.setLookAndFeel(
@@ -47,16 +49,21 @@ object Yeti extends GUIApplication {
 
 		// taken directly from SimpleGUIApplication.scala (scala 2.7.7)
 		SwingUtilities.invokeLater {
-			new Runnable { def run { init; top.pack; top.visible = true } }
+			new Runnable {
+				def run {
+					init;
+					top.pack;
+					top.visible = true
+				}
+			}
 		}
 	}
 }
 
 object Preferences extends App {
 	def title = "Preferences"
-	
-	object ports extends ComboBox[String](Serial.portList){
-		
+
+	object ports extends ComboBox[String](Serial.portList) {
 	}
 
 	object buttonConnect extends Button {
@@ -67,11 +74,13 @@ object Preferences extends App {
 		text = "Refresh"
 	}
 
-	def gui = new BoxPanel(Orientation.Vertical){
+	def gui = new BoxPanel(Orientation.Vertical) {
 		contents += ports
-		contents += new BoxPanel(Orientation.Horizontal){
+		contents += new BoxPanel(Orientation.Horizontal) {
 			contents += buttonConnect
 			contents += buttonRefresh
 		}
 	}
+
+//	def size = new Dimension(500, 200)
 }

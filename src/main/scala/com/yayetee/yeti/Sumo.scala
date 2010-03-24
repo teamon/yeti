@@ -3,7 +3,7 @@ package com.yayetee.yeti
 import javax.swing.SwingConstants
 import swing._
 import javax.swing.border.TitledBorder
-import java.awt.Font
+import java.awt.{Dimension, Font}
 
 class GroupPanel extends Panel with SequentialContainer.Wrapper {
 	override lazy val peer = {
@@ -53,6 +53,8 @@ object Sumo extends App {
 	def gui = new BoxPanel(Orientation.Horizontal) {
 		engines.foreach { contents += _.panel }
 	}
+
+//	def size = new Dimension(200, 200)
 }
 
 
