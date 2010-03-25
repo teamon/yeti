@@ -66,6 +66,7 @@ object Serial {
 				if (input >= -1) {
 					val char = input.toChar
 					if (char == '\n') {
+						println(buffer)
 						receiver ! (buffer match {
 							case Regex.Joy(id, sign, value) =>
 								SerialMessage.Joystick(id.toInt, if(sign == "-") -value.toInt else value.toInt)

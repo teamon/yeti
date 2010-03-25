@@ -22,7 +22,6 @@ abstract class App(portName: String) extends Actor {
 	start
 
 	def act {
-		println("Acting!")
 		loop {
 			receive {
 				case SerialMessage.Stop =>
