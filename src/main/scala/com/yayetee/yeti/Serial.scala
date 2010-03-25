@@ -53,7 +53,7 @@ object Serial {
 		protected var buffer = ""
 
 		object Regex {
-			val Joy = """.+?J(\d+)=(-?)(\d+)""".r
+			val Joy = """.*?J(\d+)=(-?)(\d+)""".r
 		}
 
 		def act {
