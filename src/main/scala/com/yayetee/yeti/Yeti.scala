@@ -1,69 +1,105 @@
 package com.yayetee.yeti
 
 import scala.swing._
-import scala.swing.event.{ButtonClicked, SelectionChanged}
+import event.{WindowClosing, ButtonClicked}
 import javax.swing.UIManager
+import gnu.io.SerialPort
+import scala.actors.Actor
+import scala.actors.Actor._
 
-object SystemProperties {
-	def set(props: (String, String)*) {
-		props.foreach {p => System.setProperty(p._1, p._2)}
+abstract class App(portName: String) extends Actor {
+	// connect to serial port
+	val port = Serial.connection(portName)
+	port.setSerialPortParams(9600, SerialPort.DATABITS_8, SerialPort.STOPBITS_2, SerialPort.PARITY_NONE)
+
+
+	// set reader and writer actors
+	val reader = new Serial.Reader(port.getInputStream, this)
+	val writer = new Serial.Writer(port.getOutputStream)
+	reader.start
+	writer.start
+
+	start
+
+	def act {
+		println("Acting!")
+		loop {
+			receive {
+				case SerialMessage.Stop =>
+					reader !! SerialMessage.Stop
+					writer !! SerialMessage.Stop
+					port.close
+					exit
+
+				case x:Any => parse(x)
+			}
+		}
 	}
-}
 
-object Yeti extends SwingApplication {
-	val tabs = Piast :: Sumo :: Nil
+	def title: String
 
-//	var serial :Serial
+	def parse(x: Any)
 
 	def log(s: String) {
-		logTextArea.append("[INFO] " + s + "\n")
+		logTextArea.append(s + "\n")
 	}
-  
+
 	lazy val logTextArea = new TextArea {
-		rows = 10
+    rows = 10
 		editable = false
 	}
 
-	lazy val tabbedPane = new TabbedPane {
-		tabs.foreach { a => pages += new TabbedPane.Page(a.title, a.gui) }
+	def app = this
 
-		val originalPreferredSize = preferredSize
-		
-		lazy val maxPreferredWidth = pages.map {_.self.preferredSize.width}.max
+	def frame = new Frame {
+		title = app.title
+		contents = new BoxPanel(Orientation.Vertical){
+			contents += gui
+			contents += new ScrollPane {
+				contents = logTextArea
+			}
+		}
 
-		lazy val maxPreferredHeight = pages.map {_.self.preferredSize.height}.max
-
-		def updatePreferredSize {
-			val size = selection.page.self.preferredSize
-			preferredSize = (
-					originalPreferredSize.width - (maxPreferredWidth - size.width),
-					originalPreferredSize.height - (maxPreferredHeight - size.height)
-			)
+		reactions += {
+			case WindowClosing(_) => app ! SerialMessage.Stop
 		}
 	}
+
+	def gui: Component
+}
+
+
+object Yeti extends SwingApplication {
 
 	def top = new MainFrame {
 		title = "Yeti"
 
-		contents = new BoxPanel(Orientation.Vertical) {
-			contents += tabbedPane
-			contents += new ScrollPane(logTextArea)
+		val btn = new Button { text = "App:Connect" }
+
+		val buttonRefresh = new Button { text = "Refresh" }
+		val ports = new ComboBox[String](Serial.portList)
+
+		contents = new BoxPanel(Orientation.Vertical){
+			contents += ports
+			contents += new BoxPanel(Orientation.Horizontal){
+				contents += btn
+				contents += buttonRefresh
+			}
 		}
 
-		listenTo(tabbedPane.selection)
+		listenTo(buttonRefresh, btn)
 
 		reactions += {
-			case SelectionChanged(`tabbedPane`) =>
-				tabbedPane.updatePreferredSize
-				pack
+			case ButtonClicked(`buttonRefresh`) => ports.peer.setModel(ComboBox.newConstantModel(Serial.portList))
+			case ButtonClicked(`btn`) =>
+				val app = new Piast(ports.selection.item)
+				val frame = app.frame
+				frame.pack
+				frame.visible = true
 		}
 	}
 
 	override def startup(args: Array[String]) {
-
-		// Quaqua properties (MacOS X only)
-		SystemProperties.set()
-
 		try {
 			UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel")
 		} catch {
@@ -72,13 +108,8 @@ object Yeti extends SwingApplication {
 
 		// taken directly from SimpleSwingApplication.scala (scala 2.8.0.Beta1-RC8)
 		val t = top
-		t.pack()
+		t.pack
 		t.visible = true
-	}
-
-
-	def info(s: String) {
-		logTextArea.append("[INFO] " + s + "\n")
 	}
 }
 

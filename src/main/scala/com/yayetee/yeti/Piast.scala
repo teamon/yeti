@@ -1,9 +1,23 @@
 package com.yayetee.yeti
 
-import javax.swing.border.TitledBorder
 import scala.swing._
-import scala.actors.Actor
-import scala.actors.Actor.loop
+import javax.swing.border.TitledBorder
+
+class Piast(port: String) extends App(port){
+	def title = "Piast"
+	
+	val axes = new Axis("X axis") :: new Axis("Y axis") :: new Axis("Z axis") :: Nil
+
+	def gui = new BoxPanel(Orientation.Horizontal) {
+		axes foreach {contents += _.panel}
+	}
+
+	def parse(msg: Any) = msg match {
+		case SerialMessage.Joystick(id, value) =>
+			axes(id).value_=(value)
+		case _ =>
+	}
+}
 
 class Axis(title: String) {
 	object slider extends Slider {
@@ -24,32 +38,15 @@ class Axis(title: String) {
 		peer.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT)
 	}
 
-
 	object panel extends BoxPanel(Orientation.Vertical) {
 		border = new TitledBorder(title)
 
 		contents += slider
 		contents += label
 	}
-}
 
-object Piast extends App {
-	val x = new Axis("X axis")
-	val y = new Axis("Y axis")
-	val z = new Axis("Z axis")
-
-	val title = "Piast"
-
-	val serial = new SerialActor {
-		def parse(x: Any) = x match {
-			case SerialMessage.Plain(msg) => log("got: " + msg)
-		}
+	def value_=(v: Int) {
+		label.text = v.toString
+		slider.value = v
 	}
-
-	lazy val mainGui = new BoxPanel(Orientation.Horizontal) {
-		List(x, y, z) foreach {contents += _.panel}
-	}
-
-
-
 }
