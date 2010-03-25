@@ -1,8 +1,9 @@
 package com.yayetee.yeti
 
-import javax.swing.SwingConstants
 import javax.swing.border.TitledBorder
-import swing._
+import scala.swing._
+import scala.actors.Actor
+import scala.actors.Actor.loop
 
 class Axis(title: String) {
 	object slider extends Slider {
@@ -13,7 +14,7 @@ class Axis(title: String) {
 		minorTickSpacing = 10
 		paintLabels = true
 		enabled = false
-		peer.setOrientation(SwingConstants.VERTICAL)
+		orientation = Orientation.Vertical
 		peer.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT)
 	}
 
@@ -37,9 +38,18 @@ object Piast extends App {
 	val y = new Axis("Y axis")
 	val z = new Axis("Z axis")
 
-	def title = "Piast"
+	val title = "Piast"
 
-	lazy val gui = new BoxPanel(Orientation.Horizontal) {
+	val serial = new SerialActor {
+		def parse(x: Any) = x match {
+			case SerialMessage.Plain(msg) => log("got: " + msg)
+		}
+	}
+
+	lazy val mainGui = new BoxPanel(Orientation.Horizontal) {
 		List(x, y, z) foreach {contents += _.panel}
 	}
+
+
+
 }

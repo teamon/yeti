@@ -1,9 +1,8 @@
 package com.yayetee.yeti
 
 import scala.swing._
-import event.{ButtonClicked, SelectionChanged}
-import javax.swing.{UIManager}
-import java.awt.Dimension
+import scala.swing.event.{ButtonClicked, SelectionChanged}
+import javax.swing.UIManager
 
 object SystemProperties {
 	def set(props: (String, String)*) {
@@ -12,23 +11,36 @@ object SystemProperties {
 }
 
 object Yeti extends SwingApplication {
-	val tabs = Piast :: Sumo :: Preferences :: Nil
+	val tabs = Piast :: Sumo :: Nil
 
+//	var serial :Serial
+
+	def log(s: String) {
+		logTextArea.append("[INFO] " + s + "\n")
+	}
+  
 	lazy val logTextArea = new TextArea {
 		rows = 10
 		editable = false
 	}
 
 	lazy val tabbedPane = new TabbedPane {
-		tabs.foreach { a =>
-			pages += new TabbedPane.Page(a.title, a.gui){
-//				enabled = false
-			}
+		tabs.foreach { a => pages += new TabbedPane.Page(a.title, a.gui) }
+
+		val originalPreferredSize = preferredSize
+		
+		lazy val maxPreferredWidth = pages.map {_.self.preferredSize.width}.max
+
+		lazy val maxPreferredHeight = pages.map {_.self.preferredSize.height}.max
+
+		def updatePreferredSize {
+			val size = selection.page.self.preferredSize
+			preferredSize = (
+					originalPreferredSize.width - (maxPreferredWidth - size.width),
+					originalPreferredSize.height - (maxPreferredHeight - size.height)
+			)
 		}
 	}
-
-	lazy val maxWidth  = tabs.map { _.gui.peer.getPreferredSize.width }.max
-	lazy val maxHeight = tabs.map{  _.gui.peer.getPreferredSize.height }.max
 
 	def top = new MainFrame {
 		title = "Yeti"
@@ -38,26 +50,12 @@ object Yeti extends SwingApplication {
 			contents += new ScrollPane(logTextArea)
 		}
 
-//		tabbedPane.pages(tabs.length-1).enabled = true
-
-//		tabbedPane.selection.index = tabs.length-1
-
-		val originalTabsDim = tabbedPane.preferredSize
-
 		listenTo(tabbedPane.selection)
 
 		reactions += {
-			case SelectionChanged(pane) =>
-				val panelDim = tabbedPane.selection.page.self.preferredSize
-
-		    println(panelDim)
-
-		    tabbedPane.preferredSize = new Dimension(
-		      originalTabsDim.width - (maxWidth - panelDim.width),
-		      originalTabsDim.height - (maxHeight - panelDim.height)
-			  )
-
-		    pack
+			case SelectionChanged(`tabbedPane`) =>
+				tabbedPane.updatePreferredSize
+				pack
 		}
 	}
 
@@ -77,36 +75,10 @@ object Yeti extends SwingApplication {
 		t.pack()
 		t.visible = true
 	}
-}
 
-object Preferences extends App {
-	def title = "Preferences"
 
-	object ports extends ComboBox[String](Serial.portList) {
-	}
-
-	object buttonConnect extends Button {
-		text = "Connect"
-	}
-
-	object buttonRefresh extends Button {
-		text = "Refresh"
-	}
-
-	lazy val gui = new BoxPanel(Orientation.Vertical) {
-		contents += ports
-		contents += new BoxPanel(Orientation.Horizontal) {
-			contents += buttonConnect
-			contents += buttonRefresh
-		}
-
-		listenTo(buttonConnect, buttonRefresh)
-
-//		reactions += {
-////			case ButtonClicked(btn) => btn match {
-////				case buttonConnect => println("connect")
-////				case buttonRefresh => println("refresh")
-////			}
-//		}
+	def info(s: String) {
+		logTextArea.append("[INFO] " + s + "\n")
 	}
 }
+

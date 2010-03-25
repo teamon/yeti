@@ -39,11 +39,18 @@ object Sumo extends App {
 	val e0 = new Engine("Engine 0")
 	val e1 = new Engine("Engine 1")
 
-	def title = "Sumo"
+	val title = "Sumo"
 
-	lazy val gui = new BoxPanel(Orientation.Horizontal) {
+	val serial = new SerialActor {
+		def parse(x: Any) = x match {
+			case SerialMessage.Plain(msg) => log("got: " + msg)
+		}
+	}
+
+	lazy val mainGui = new BoxPanel(Orientation.Horizontal) {
 		List(e0, e1) foreach {contents += _.panel}
 	}
+	
 }
 
 
