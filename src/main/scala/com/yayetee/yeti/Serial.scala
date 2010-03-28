@@ -17,13 +17,13 @@ object SerialMessage {
 
 object Serial {
 	def portList = {
-		val list = new ListBuffer[String]
+		val list = new ListBuffer[CommPortIdentifier]
 		val e = CommPortIdentifier.getPortIdentifiers
 		while (e.hasMoreElements) {
-			list += e.nextElement.asInstanceOf[CommPortIdentifier].getName
+			list += e.nextElement.asInstanceOf[CommPortIdentifier]
 		}
-		// TODO: Return only availible ports
-		list.toList
+
+		list.toList.filter { _.getPortType == CommPortIdentifier.PORT_SERIAL}  map { _.getName }
 	}
 
 	def connection(portName: String) = {

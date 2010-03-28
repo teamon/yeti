@@ -1,7 +1,8 @@
 package com.yayetee.yeti
 
 import scala.swing._
-import javax.swing.border.TitledBorder
+
+object Piast extends AppFactory { def apply(port: String) = new Piast(port) }
 
 class Piast(port: String) extends App(port){
 	def title = "Piast"
@@ -19,34 +20,4 @@ class Piast(port: String) extends App(port){
 	}
 }
 
-class Axis(title: String) {
-	object slider extends Slider {
-		max = 100
-		min = -100
-		value = 0
-		majorTickSpacing = 100
-		minorTickSpacing = 10
-		paintLabels = true
-		enabled = false
-		orientation = Orientation.Vertical
-		peer.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT)
-	}
-
-	object label extends Label {
-		text = slider.value.toString
-		horizontalAlignment = Alignment.Left
-		peer.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT)
-	}
-
-	object panel extends BoxPanel(Orientation.Vertical) {
-		border = new TitledBorder(title)
-
-		contents += slider
-		contents += label
-	}
-
-	def value_=(v: Int) {
-		label.text = v.toString
-		slider.value = v
-	}
-}
+class Axis(title0: String) extends YetiSlider(title0)

@@ -1,56 +1,105 @@
-//package com.yayetee.yeti
-//
-//import scala.swing._
-//import scala.swing.event.ButtonClicked
-//import javax.swing.UIManager
-//import javax.swing.border.TitledBorder
-//import actors.Actor
-//
-//trait App {
-//	val title: String
-//	val mainGui: Component
-//
-//	def gui = new BoxPanel(Orientation.Vertical) {
-//		contents += preferences.gui
-//		contents += mainGui
-//	}
-//
-//	def log(s: String) {
-//		Yeti.log("[" + title + "] " + s)
-//	}
-//
-//	val serial: SerialActor
-//
-//	object preferences {
-//		object ports extends ComboBox[String](Serial.portList)
-//
-//		val buttonConnect = new Button { text = "Connect" }
-//		val buttonDisconnect = new Button { text = "Disconnect"; visible = false }
-//		val buttonRefresh = new Button { text = "Refresh" }
-//
-//		lazy val gui = new BoxPanel(Orientation.Horizontal) {
-//			border = new TitledBorder("Preferences")
-//
-//			contents += ports
-//			contents += buttonConnect
-//			contents += buttonDisconnect
-//			contents += buttonRefresh
-//
-//			listenTo(buttonConnect, buttonRefresh)
-//
-//			reactions += {
-//				case ButtonClicked(`buttonConnect`) =>
-//					log("Connecting to " + ports.selection.item)
-//					serial.connect(ports.selection.item)
-//
-//				case ButtonClicked(`buttonDisconnect`) =>
-//					serial !! SerialMessage.StopActor
-//
-//				case ButtonClicked(`buttonRefresh`) =>
-//					ports.peer.setModel(ComboBox.newConstantModel(Serial.portList))
-//			}
-//		}
-//	}
-//
-//
-//}
+package com.yayetee.yeti
+
+import scala.swing._
+import scala.swing.event.WindowClosing
+import scala.actors.Actor
+import scala.actors.Actor._
+import gnu.io.SerialPort
+import javax.swing.border.TitledBorder
+
+abstract class AppFactory {
+	def apply(port: String): App
+}
+
+abstract class App(portName: String) extends Actor {
+	// connect to serial port
+	val port = Serial.connection(portName)
+	port.setSerialPortParams(9600, SerialPort.DATABITS_8, SerialPort.STOPBITS_2, SerialPort.PARITY_NONE)
+
+
+	// set reader and writer actors
+	val reader = new Serial.Reader(port.getInputStream, this)
+	val writer = new Serial.Writer(port.getOutputStream)
+	reader.start
+	writer.start
+
+	start
+
+	def act {
+		loop {
+			receive {
+				case SerialMessage.Stop =>
+					reader !! SerialMessage.Stop
+					writer !! SerialMessage.Stop
+					port.close
+					exit
+
+				case x:Any => parse(x)
+			}
+		}
+	}
+
+	def title: String
+
+	def parse(x: Any)
+
+	def log(s: String) {
+		logTextArea.append(s + "\n")
+	}
+
+	lazy val logTextArea = new TextArea {
+    rows = 10
+		editable = false
+	}
+
+	def app = this
+
+	def frame = new Frame {
+		title = app.title
+		contents = new BoxPanel(Orientation.Vertical){
+			contents += gui
+			contents += new ScrollPane {
+				contents = logTextArea
+			}
+		}
+
+		reactions += {
+			case WindowClosing(_) => app ! SerialMessage.Stop
+		}
+	}
+
+	def gui: Component
+}
+
+
+class YetiSlider(title: String) {
+	object slider extends Slider {
+		max = 100
+		min = -100
+		value = 0
+		majorTickSpacing = 100
+		minorTickSpacing = 10
+		paintLabels = true
+		enabled = false
+		orientation = Orientation.Vertical
+		peer.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT)
+	}
+
+	object label extends Label {
+		text = slider.value.toString
+		horizontalAlignment = Alignment.Left
+		peer.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT)
+	}
+
+	object panel extends BoxPanel(Orientation.Vertical) {
+		border = new TitledBorder(title)
+
+		contents += slider
+		contents += label
+	}
+
+	def value_=(v: Int) {
+		label.text = v.toString
+		slider.value = v
+	}
+}
