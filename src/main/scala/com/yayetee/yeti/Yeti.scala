@@ -33,7 +33,6 @@ object Yeti extends SwingApplication {
 			case ButtonClicked(`buttonRefresh`) => ports.peer.setModel(ComboBox.newConstantModel(Serial.portList))
 			case ButtonClicked(`buttonConnect`) =>
 				val app = apps.selection.item(ports.selection.item)
-//				val app = new Piast(ports.selection.item)
 				val frame = app.frame
 				frame.pack
 				frame.visible = true

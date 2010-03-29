@@ -12,6 +12,7 @@ object SerialMessage {
 	case class Plain(msg: String)
 	case class Joystick(id: Int, value: Int)
 
+	case class Log(msg: String)
 	case class Stop
 }
 
@@ -38,12 +39,17 @@ object Serial {
 		commPort.asInstanceOf[SerialPort]
 	}
 
-	class Writer(out: OutputStream) extends Actor {
+	class Writer(out: OutputStream, parent: Actor) extends Actor {
 		def act {
 			loop {
 				receive {
-					case SerialMessage.Stop => exit
-					case SerialMessage.Plain(msg) => msg.foreach {out.write(_)}
+					case SerialMessage.Stop =>
+						println("Writer Stop")
+						out.close
+						exit
+					case SerialMessage.Plain(msg) =>
+						parent ! SerialMessage.Log(msg)
+						(msg + "\n") foreach {out.write(_)}
 				}
 			}
 		}
@@ -53,20 +59,22 @@ object Serial {
 		protected var buffer = ""
 
 		object Regex {
-			val Joy = """.*?J(\d+)=(-?)(\d+)""".r
+			val Joy = """.*?J(\d+)=(-?)(\d+).*""".r
 		}
 
 		def act {
 			loop {
 //				reactWithin(1) {
-//					case SerialMessage.Stop => exit
+//					case SerialMessage.Stop =>
+//						println("Reader Stop")
+//            in.close
+//				    exit
 //				}
 
 				val input = in.read
 				if (input >= -1) {
 					val char = input.toChar
 					if (char == '\n') {
-						println(buffer)
 						receiver ! (buffer match {
 							case Regex.Joy(id, sign, value) =>
 								SerialMessage.Joystick(id.toInt, if(sign == "-") -value.toInt else value.toInt)

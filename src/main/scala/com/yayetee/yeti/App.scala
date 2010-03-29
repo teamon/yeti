@@ -6,6 +6,7 @@ import scala.actors.Actor
 import scala.actors.Actor._
 import gnu.io.SerialPort
 import javax.swing.border.TitledBorder
+import java.awt.Font
 
 abstract class AppFactory {
 	def apply(port: String): App
@@ -19,7 +20,7 @@ abstract class App(portName: String) extends Actor {
 
 	// set reader and writer actors
 	val reader = new Serial.Reader(port.getInputStream, this)
-	val writer = new Serial.Writer(port.getOutputStream)
+	val writer = new Serial.Writer(port.getOutputStream, this)
 	reader.start
 	writer.start
 
@@ -28,13 +29,19 @@ abstract class App(portName: String) extends Actor {
 	def act {
 		loop {
 			receive {
+				case SerialMessage.Log(msg) =>
+					log("[OUTPUT] " + msg)
+
 				case SerialMessage.Stop =>
+					println("App Stop")
 					reader !! SerialMessage.Stop
 					writer !! SerialMessage.Stop
 					port.close
 					exit
 
-				case x:Any => parse(x)
+				case x:Any =>
+					log("[INPUT] " + x)
+					parse(x)
 			}
 		}
 	}
@@ -45,11 +52,14 @@ abstract class App(portName: String) extends Actor {
 
 	def log(s: String) {
 		logTextArea.append(s + "\n")
+		logTextArea.caret.position = logTextArea.peer.getDocument.getLength
 	}
 
 	lazy val logTextArea = new TextArea {
     rows = 10
 		editable = false
+
+		peer.setFont(new Font("Courier", Font.PLAIN, 10))
 	}
 
 	def app = this
